@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Olha quanto tempo já passou</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #F4F1EC;
+      --ink: #1F1B1A;
+      --soft: #7A726D;
+      --accent: #E2504A;
+      --card: #FFFFFF;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Chakra Petch', system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding: 40px 16px 56px;
+      display: flex;
+      justify-content: center;
+    }
+
+    main {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    /* ---------- topo ---------- */
+    .hello {
+      margin-bottom: 34px;
+      animation: pop .6s ease both;
+    }
+
+    .hello h1 {
+      font-size: clamp(34px, 9.5vw, 50px);
+      line-height: 1.05;
+      font-weight: 700;
+      letter-spacing: -.5px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .hello h1 span {
+      color: var(--accent);
+    }
+
+    .hello p {
+      margin-top: 12px;
+      color: var(--soft);
+      font-weight: 500;
+      font-size: 15px;
+    }
+
+    /* ---------- blocos ---------- */
+    .block {
+      background: var(--card);
+      border: 2px solid var(--ink);
+      border-radius: 6px;
+      box-shadow: 6px 6px 0 var(--ink);
+      padding: 26px 16px 20px;
+      position: relative;
+    }
+
+    .block.main { animation: pop .6s .1s ease both; }
+
+    .tag {
+      position: absolute;
+      top: -14px;
+      left: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: 2px solid var(--ink);
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      transform: rotate(-2deg);
+      white-space: nowrap;
+    }
+
+    .block h2 {
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1.15;
+      margin: 4px 0 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    @media (min-width: 480px) {
+      .grid { grid-template-columns: repeat(6, 1fr); }
+    }
+
+    .unit {
+      background: var(--bg);
+      border: 2px solid var(--ink);
+      border-radius: 4px;
+      padding: 12px 4px 9px;
+      min-width: 0;
+      text-align: center;
+    }
+
+    .unit b {
+      display: block;
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .unit small {
+      display: block;
+      margin-top: 7px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: lowercase;
+      letter-spacing: .5px;
+      color: var(--soft);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* o primeiro quadradinho de cada contador ganha destaque */
+    .unit.hot { background: var(--accent); }
+    .unit.hot b { color: #fff; }
+    .unit.hot small { color: rgba(255, 255, 255, .85); }
+
+    .since {
+      margin-top: 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--soft);
+    }
+    .since span { color: var(--ink); font-weight: 700; }
+
+    /* ---------- botão ---------- */
+    .btn-wrap { margin: 36px 0 8px; }
+
+    button.more {
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+      background: var(--card);
+      border: 2px solid var(--ink);
+      border-radius: 4px;
+      padding: 12px 20px;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 var(--ink);
+      transition: transform .1s ease, box-shadow .1s ease;
+    }
+    button.more:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink); }
+    button.more:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--ink); }
+
+    /* ---------- segundo bloco ---------- */
+    .reveal {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows .5s ease;
+    }
+    .reveal.open { grid-template-rows: 1fr; }
+    .reveal > div { overflow: hidden; padding: 20px 8px 8px 0; margin-top: -8px; }
+
+    .block.second {
+      opacity: 0;
+      transition: opacity .4s ease .1s;
+    }
+    .reveal.open .block.second { opacity: 1; }
+    .block.second .tag { background: var(--ink); }
+
+    /* ---------- rodapé ---------- */
+    .bye {
+      margin-top: 40px;
+      animation: pop .6s .2s ease both;
+    }
+    .bye p {
+      font-size: clamp(24px, 7vw, 32px);
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .bye .love {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--accent);
+      cursor: pointer;
+      user-select: none;
+    }
+    .bye .love svg { width: 20px; height: 20px; fill: currentColor; transition: transform .15s ease; }
+    .bye .love:active svg { transform: scale(1.4); }
+
+    /* ---------- corações subindo ---------- */
+    .float {
+      position: fixed;
+      bottom: -40px;
+      z-index: 1;
+      pointer-events: none;
+      color: var(--accent);
+      animation: up linear forwards;
+    }
+    .float svg { width: 100%; height: 100%; fill: currentColor; }
+
+    @keyframes up {
+      0%   { transform: translateY(0); opacity: 0; }
+      12%  { opacity: .35; }
+      100% { transform: translateY(-115vh); opacity: 0; }
+    }
+
+    @keyframes pop {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <main>
+
+    <section class="hello">
+      <h1 id="title">Oi, amor.<br>Olha só <span>quanto tempo</span> já passou.</h1>
+      <p>(e eu nem vi o tempo passar)</p>
+    </section>
+
+    <!-- contador principal -->
+    <section class="block main">
+      <div class="tag">ao vivo</div>
+      <h2>Estamos juntos há:</h2>
+      <div class="grid" id="grid1"></div>
+      <p class="since">desde <span>18/09/2026</span></p>
+    </section>
+
+    <div class="btn-wrap">
+      <button class="more" id="btn" onclick="toggleSecond()">E quando nos conhecemos?</button>
+    </div>
+
+    <!-- segundo contador -->
+    <div class="reveal" id="reveal">
+      <div>
+        <section class="block second">
+          <div class="tag">tudo começou aqui</div>
+          <h2>Começamos a conversar há:</h2>
+          <div class="grid" id="grid2"></div>
+          <p class="since">primeira conversa em <span>28/07/2026</span></p>
+        </section>
+      </div>
+    </div>
+
+    <footer class="bye">
+      <p>O tempo com você parece voar!</p>
+      <span class="love" id="love">
+        Te amo
+        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      </span>
+    </footer>
+
+  </main>
+
+  <script>
+    // Datas de início (Ano, Mês-1, Dia, Hora, Minuto, Segundo)
+    const startRelationship = new Date(2026, 8, 18, 0, 0, 0); // 18/09/2026
+    const startMet          = new Date(2026, 6, 28, 0, 0, 0); // 28/07/2026
+
+    const UNITS = [
+      ['years',   'ano',     'anos'],
+      ['months',  'mês',     'meses'],
+      ['days',    'dia',     'dias'],
+      ['hours',   'hora',    'horas'],
+      ['minutes', 'minuto',  'minutos'],
+      ['seconds', 'segundo', 'segundos']
+    ];
+
+    function buildGrid(containerId, suffix) {
+      document.getElementById(containerId).innerHTML = UNITS.map(([key, , plural]) =>
+        `<div class="unit"><b id="${key}${suffix}">00</b><small id="lbl-${key}${suffix}">${plural}</small></div>`
+      ).join('');
+    }
+
+    function calculateTimeDifference(fromDate, toDate = new Date()) {
+      let y = toDate.getFullYear() - fromDate.getFullYear();
+      let m = toDate.getMonth() - fromDate.getMonth();
+      let d = toDate.getDate() - fromDate.getDate();
+
+      if (d < 0) {
+        m--;
+        d += new Date(toDate.getFullYear(), toDate.getMonth(), 0).getDate();
+      }
+      if (m < 0) { y--; m += 12; }
+
+      let h  = toDate.getHours()   - fromDate.getHours();
+      let mi = toDate.getMinutes() - fromDate.getMinutes();
+      let s  = toDate.getSeconds() - fromDate.getSeconds();
+
+      if (s < 0)  { s += 60;  mi--; }
+      if (mi < 0) { mi += 60; h--; }
+      if (h < 0)  { h += 24; }
+
+      return {
+        years: Math.max(0, y), months: Math.max(0, m), days: Math.max(0, d),
+        hours: Math.max(0, h), minutes: Math.max(0, mi), seconds: Math.max(0, s)
+      };
+    }
+
+    // destaca em vermelho a maior unidade que já tem valor (a que "manda" no contador)
+    function updateCounter(suffix, startDate) {
+      const diff = calculateTimeDifference(startDate);
+      let marked = false;
+      UNITS.forEach(([key, singular, plural]) => {
+        const num = document.getElementById(key + suffix);
+        num.textContent = String(diff[key]).padStart(2, '0');
+        document.getElementById('lbl-' + key + suffix).textContent = diff[key] === 1 ? singular : plural;
+
+        const box = num.parentElement;
+        const isHot = !marked && diff[key] > 0;
+        box.classList.toggle('hot', isHot);
+        if (isHot) marked = true;
+      });
+    }
+
+    function updateAll() {
+      updateCounter('1', startRelationship);
+      updateCounter('2', startMet);
+    }
+
+    let open = false;
+    function toggleSecond() {
+      open = !open;
+      document.getElementById('reveal').classList.toggle('open', open);
+      document.getElementById('btn').textContent = open ? 'Pronto, já vi' : 'E quando nos conhecemos?';
+      if (open) {
+        setTimeout(() => document.getElementById('reveal').scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
+      }
+    }
+
+    // corações discretos subindo
+    const HEART = '<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+    function spawn() {
+      const el = document.createElement('div');
+      el.className = 'float';
+      el.innerHTML = HEART;
+      const size = Math.random() * 12 + 12;
+      el.style.width = el.style.height = size + 'px';
+      el.style.left = Math.random() * 94 + '%';
+      const dur = Math.random() * 5 + 8;
+      el.style.animationDuration = dur + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), dur * 1000);
+    }
+
+    function party(x = 0.5, y = 0.5) {
+      if (typeof confetti !== 'function') return;
+      confetti({
+        particleCount: 50,
+        spread: 70,
+        origin: { x, y },
+        colors: ['#E2504A', '#1F1B1A', '#FFFFFF', '#CFC8C0']
+      });
+    }
+
+    // toquinhos escondidos: o título e o "Te amo" soltam confete
+    document.getElementById('title').addEventListener('click', e => {
+      party(e.clientX / innerWidth, e.clientY / innerHeight);
+    });
+    document.getElementById('love').addEventListener('click', e => {
+      party(e.clientX / innerWidth, e.clientY / innerHeight);
+      for (let i = 0; i < 6; i++) setTimeout(spawn, i * 120);
+    });
+
+    window.addEventListener('load', () => {
+      buildGrid('grid1', '1');
+      buildGrid('grid2', '2');
+      updateAll();
+      setInterval(updateAll, 1000);
+
+      setInterval(spawn, 1800);
+      for (let i = 0; i < 3; i++) setTimeout(spawn, i * 400);
+    });
+  </script>
+</body>
+</html>
